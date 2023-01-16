@@ -1,36 +1,39 @@
-import React from 'react'
+import React,{useState,useEffect} from 'react'
 import classes from './AvailableMeals.module.css'
 import Card from '../UI/Card';
 import MealItem from './MealItem/MealItem';
-const DUMMY_MEALS = [
-    {
-      id: 'm1',
-      name: 'Sushi',
-      description: 'Finest fish and veggies',
-      price: 22.99,
-    },
-    {
-      id: 'm2',
-      name: 'Schnitzel',
-      description: 'A german specialty!',
-      price: 16.5,
-    },
-    {
-      id: 'm3',
-      name: 'Barbecue Burger',
-      description: 'American, raw, meaty',
-      price: 12.99,
-    },
-    {
-      id: 'm4',
-      name: 'Green Bowl',
-      description: 'Healthy...and green...',
-      price: 18.99,
-    },
-  ];
+
 
 function AvailableMeals() {
-    const mealsList = DUMMY_MEALS.map((meal) => (
+  const[meals,setMeals] = useState([])
+  const[isLoading,setIsLoading] = useState(true)
+  const[httpError,setHttpError]= useState(null)
+
+
+  useEffect(()=>{
+    const fetchMeals = async ()=>{
+      const response = await fetch('https://teemamin-react-default-rtdb.europe-west1.firebasedatabase.app/meals.json');
+
+      if(!response.ok){
+        throw new Error("something went wrong fetching the data")
+      }
+      const data = await response.json();
+      let transformedData = []
+      for(const meal in data){
+        transformedData.push({...data[meal],id:meal})
+      }
+      setMeals(transformedData)
+     setIsLoading(false)
+    }
+
+    fetchMeals().then(()=>console.log('success')).catch(err=>{
+      setIsLoading(false)
+      setHttpError(err.message)
+    })
+  },[])
+  
+  
+  const mealsList = meals.map((meal) => (
         <MealItem
           key={meal.id}
           name={meal.name}
@@ -42,7 +45,7 @@ function AvailableMeals() {
   return (
     <section className={classes.meals}>
         <Card>
-            {mealsList}
+            {isLoading ? <p>Loading....</p> : httpError ? <p>{httpError}</p> : mealsList}
         </Card>
         
     </section>
